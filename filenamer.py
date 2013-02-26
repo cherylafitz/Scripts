@@ -2,9 +2,14 @@
 import os
 list_of_files = [file for file in os.listdir('.')]
 
+fileDict = {}
+
 def getFiles():
     return [file for file in os.listdir('.')]
     
+def printFiles():
+    for file in getFiles():
+        print file
 
 def countPDFs(list_of_files=getFiles()):
     count = 0
@@ -31,7 +36,7 @@ def renamer(Dict=fileDict, list_of_files=getFiles()):
         if file.lower().endswith('.pdf'):
             os.rename(file,Dict[file])
             print "renamed", file, "to", Dict[file]
-    addPDF()
+    #addPDF()
         
 
 def addPDF():
@@ -39,7 +44,3 @@ def addPDF():
     for file in list:
         if not file.lower().endswith('.py'):
             os.rename(file,file+'.pdf')            
-
-
-
-fileDict = {}

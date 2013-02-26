@@ -3,7 +3,7 @@ import pyPdf
 import os
 
 try:
-    os.mkdir "output/"
+    os.mkdir("output/")
 except:
     print "did not create output dir"
 
