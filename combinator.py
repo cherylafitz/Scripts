@@ -18,7 +18,6 @@ class Pdf(object):
         self.appPdf = None
         self.recPdfs = []
         self.uploads = []
-
     def addAppPdf(self,filename):
         self.appPdf = filename
     def addRecPdf(self,filename):
@@ -33,6 +32,15 @@ class Pdf(object):
         return self.recPdfs
     def getUploads(self):
         return self.uploads
+    def sortUploads(self):
+        toEnd = []
+        for filename in self.getUploads():
+            #print 'check ', filename
+            for s in toEnd:
+                if s in filename:
+                    #print 'if block'
+                    self.uploads.remove(filename)
+                    self.uploads.append(filename)
         
 def getFiles():
     '''
@@ -111,7 +119,6 @@ def combine(pdfList, files = getFiles()):
         else:
             if ".pdf" in file or ".PDF" in file:
                 pdf.addUpload(file)
-
 
         
 def getPdfs():
@@ -198,7 +205,11 @@ def go():
 
 pdfList = createPDFObjects()
 combine(pdfList)
-
+for pdf in pdfList:
+    try:
+        pdf.sortUploads()
+    except:
+        pass
 
 ####
 
