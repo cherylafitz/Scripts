@@ -109,9 +109,9 @@ def combine(pdfList, files = getFiles()):
         pdf = findPdfObject(refCode,pdfList)
         if 'App' in file:
             pdf.addAppPdf(file)
-        elif '-rec-' in file or "-Rec"- in file:
+        elif '-rec-' in file or "-Rec-" in file:
             pdf.addRecPdf(file)
-        elif 'trans' in file:
+        elif 'UploadGradeTranscript' in file:
             pdf.addTranscript(file)
         else:
             if ".pdf" in file or ".PDF" in file:
@@ -136,9 +136,9 @@ def makeOutputPdf(pdf):
     pieces = []
     if pdf.getAppPdf() != None:
         pieces.append(pdf.getAppPdf())
-    for document in pdf.getRecPdfs():
-        pieces.append(document)
     for document in pdf.getUploads():
+        pieces.append(document)
+    for document in pdf.getRecPdfs():
         pieces.append(document)
     for document in pdf.getTranscripts():
         pieces.append(document)
