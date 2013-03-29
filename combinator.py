@@ -18,6 +18,7 @@ class Pdf(object):
         self.appPdf = None
         self.recPdfs = []
         self.uploads = []
+        self.transcripts = []
     def addAppPdf(self,filename):
         self.appPdf = filename
     def addRecPdf(self,filename):
@@ -30,6 +31,10 @@ class Pdf(object):
         return self.appPdf
     def getRecPdfs(self):
         return self.recPdfs
+    def addTranscript(self,filename):
+        self.transcripts.append(filename)
+    def getTranscripts(self):
+        return self.transcripts
     def getUploads(self):
         return self.uploads
     def sortUploads(self):
@@ -100,26 +105,17 @@ def combine(pdfList, files = getFiles()):
     Combines files found in a folder into Pdf objects, based on strings found in their filenames
     '''
     for file in files:
-##        if ".pdf" not in file:
-##            break
-##        if 'App' in file:
-##            print file, 'app'
-##        elif 'Teacher' in file:
-##            print file, 'teacher'
-##        elif 'Parent' in file:
-##            print file, 'parent'
-##        else:
-##            print "PROBLEM", file
         refCode = getRefCode(file)
         pdf = findPdfObject(refCode,pdfList)
         if 'App' in file:
             pdf.addAppPdf(file)
-        elif 'rec' in file:
+        elif '-rec-' in file or "-Rec"- in file:
             pdf.addRecPdf(file)
+        elif 'trans' in file:
+            pdf.addTranscript(file)
         else:
             if ".pdf" in file or ".PDF" in file:
                 pdf.addUpload(file)
-
         
 def getPdfs():
     '''
@@ -140,10 +136,12 @@ def makeOutputPdf(pdf):
     pieces = []
     if pdf.getAppPdf() != None:
         pieces.append(pdf.getAppPdf())
-    for rec in pdf.getRecPdfs():
-        pieces.append(rec)
-    for rec in pdf.getUploads():
-        pieces.append(rec)
+    for document in pdf.getRecPdfs():
+        pieces.append(document)
+    for document in pdf.getUploads():
+        pieces.append(document)
+    for document in pdf.getTranscripts():
+        pieces.append(document)
     for piece in pieces:
         if isPdfEncrypted(piece) == True:
             raise Exception(piece)
@@ -189,6 +187,7 @@ def listPdfs(list):
         print pdf.getAppPdf()
         print pdf.getRecPdfs()
         print pdf.getUploads()
+        print pdf.getTranscripts()
         print "###"
 
 
@@ -211,35 +210,3 @@ for pdf in pdfList:
     except:
         pass
 
-####
-
-### Nonsense and half-formed ideas graveyard
-
-
-# def outputter(pieces):
-#     print pieces
-#     output = PdfFileWriter()
-#     for piece in pieces:
-#         input = PdfFileReader(file(piece, "rb"))
-#         try:
-#             numPages = input.getNumPages()
-#         except:
-#             print piece
-# ##        for page in range (numPages):
-# ##            output.addPage(input.getPage(page))
-# ##    outputName = "output/" + pieces[1]
-# ##    outputStream = file(outputName, "wb")
-# ##    output.write(outputStream)
-# ##    outputStream.close()
-
-##def makeOutputPdf2():
-##    index = 0
-##    pdfs = getPdfs()
-##    while index < len(pdfs):
-##        pieces = []
-##        pieces.append(pdfs[index])
-##        pieces.append(pdfs[index + 1])
-##        print pieces
-##        print '###'
-##        outputter(pieces)
-##        index += 2

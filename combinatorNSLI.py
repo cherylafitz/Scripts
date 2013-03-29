@@ -105,4 +105,5 @@ combine(pdfList)
 
 def go():
     for pdf in pdfList:
-        makeOutputPdf(pdf)
+        if pdf.getAppPdf() != None:
+            makeOutputPdf(pdf)
