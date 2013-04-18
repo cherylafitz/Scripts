@@ -1,6 +1,9 @@
 import os
 import re
 
+def doNothing():
+    pass
+
 def getFiles():
     return [file for file in os.listdir('.')]
 
@@ -13,7 +16,7 @@ def getPdfs():
 
 def printFiles():
     for file in getFiles():
-        print file
+        print(file)
 
 def countPDFs(list_of_files=getFiles()):
     count = 0
@@ -91,9 +94,9 @@ def renameToSequenceOrder(pdfList=getPdfs(), adobeCodeDict=makeAdobeCodeDict()):
     for filename in pdfList:
         try:
             adobeCode = getNumbersOutOfFilename(filename)
-            print adobeCode
+            # print adobeCode
             sequenceNumber = adobeCodeDict[adobeCode]
-            print sequenceNumber
+            # print sequenceNumber
             if sequenceNumber > highestSequence:
                 highestSequence = sequenceNumber
             os.rename(filename, str(sequenceNumber) + '.pdf')
@@ -109,13 +112,13 @@ def renameToSequenceOrder(pdfList=getPdfs(), adobeCodeDict=makeAdobeCodeDict()):
     if sortProblemsFlag == True:
         nonstandard = nonStandardSortFix(nonstandard)
     for filename in nonstandard:
-        print filename
+        # print filename
         os.rename(filename, str(highestSequence + 1) + '.pdf')
-        print str(highestSequence + 1)
+        # print str(highestSequence + 1)
         highestSequence += 1
 
 def nonStandardSortFix(list):
-    print list
+    # print list
     shortest = len(list[0])
     longest = len(list[0])
     for filename in list:
@@ -123,8 +126,8 @@ def nonStandardSortFix(list):
             longest = len(filename)
         if len(filename) < shortest:
             shortest = len(filename)
-    print shortest
-    print longest
+    # print shortest
+    # print longest
     newList = []
     for filename in list:
         if len(filename) == shortest:
@@ -134,10 +137,17 @@ def nonStandardSortFix(list):
             try:
                 os.rename(filename, newName)
             except:
-                print("no rename")
+                doNothing()
+                # print("no rename")
             newList.append(newName)
         else:
             newList.append(filename)
     newList.sort()
-    print newList
+    # print newList
     return newList
+
+def go():
+    renameToSequenceOrder(getPdfs(), makeAdobeCodeDict())
+
+if __name__ == "__main__":
+    go()
