@@ -1,7 +1,28 @@
-from CLSAcceptDocumentRenamerData import registrantDataList, referenceCodeDict, documentTypeDict, usernamesToIgnore, docsToIgnore
+# -*- coding: utf-8 -*-
+from CLSAcceptDocumentRenamerData import registrantDataList, referenceCodeDict, documentTypeDict, usernamesToIgnore, docsToIgnore, organizationDict, toMove, AISIDDict
 import re
 import os
+import filenamer
 
+
+# import codecs
+# latinEncoder = codecs.getencoder("latin-1")
+
+# Add organization property to Registrant class, to deal with separating documents (should default to "unknown" because it is changeable)
+# Unicode support for filenames
+# sort output documents according to organization
+
+registrantDict = {}
+documentList = []
+try:
+    # os.mkdir("Ignored")
+    os.mkdir("Ohio State")
+    os.mkdir("Ohio University")
+    os.mkdir("American Councils")
+    os.mkdir("Unknown")
+    # os.mkdir("Moved")
+except:
+    print "make no dirs"
 
 
 class Registrant(object):
@@ -11,11 +32,15 @@ class Registrant(object):
         self.lastName = lastName
         self.AISNumber = AISNumber
         self.AISFormsAppReferenceCode = AISFormsAppReferenceCode
-        self.AISFormsusername = getUsername(AISFormsAppReferenceCode)
+        self.AISFormsUsername = getUsername(AISFormsAppReferenceCode)
         self.documents = []
+        self.organization = self.setOrganization()
 
     def getFirstName(self):
         return self.firstName
+
+    def getOrganization(self):
+        return self.organization
 
     def getLastName(self):
         return self.lastName
@@ -23,11 +48,17 @@ class Registrant(object):
     def getAISNumber(self):
         return self.AISNumber
 
+    def setOrganization(self):
+        if self.AISFormsUsername in organizationDict:
+            self.organization = getOrganization(self.AISFormsUsername)
+        else:
+            self.organization = "Unknown"
+
     def getAISFormsAppReferenceCode(self):
         return self.AISFormsAppReferenceCode
 
-    def getAISFormsusername(self):
-        return self.AISFormsusername
+    def getAISFormsUsername(self):
+        return self.AISFormsUsername
 
     def getDocuments(self):
         return self.documents
@@ -40,17 +71,21 @@ class Document(object):
 
     def __init__(self,filename):
         self.referenceCode = extractReferenceCode(filename)
-        self.AISFormsusername = getUsername(self.referenceCode)
+        self.AISFormsUsername = getUsername(self.referenceCode)
         self.documentType = findDocumentType(filename)
         self.fileFormat = findFileFormat(filename)
         self.originalFilename = filename
+        self.AISDocumentID = self.findAISDocumentID(filename)
         self.newFilename = None
 
     def getReferenceCode(self):
         return self.referenceCode
 
-    def getAISFormsusername(self):
-        return self.AISFormsusername
+    def getAISDocumentID(self):
+        return self.AISDocumentID
+
+    def getAISFormsUsername(self):
+        return self.AISFormsUsername
 
     def getDocumentType(self):
         return self.documentType
@@ -67,23 +102,91 @@ class Document(object):
     def setNewFilename(self, newFilename):
         self.newFilename = newFilename
 
-    def createNewFilename(self, registrantDict):
+    def findAISDocumentID(self, filename):
+        outputList = []
+        for key in AISIDDict:
+            if key in filename:
+                outputList.append(AISIDDict[key])
+        if len(outputList) > 1:
+            raise Exception
+        elif len(outputList) == 1:
+            return outputList[0]
+        else:
+            return None
+
+    def createNewFilenameForStaff(self, registrantDict):
         originalFilename = self.getOriginalFilename()
-        registrant = registrantDict[self.getAISFormsusername()]
+        registrant = registrantDict[self.getAISFormsUsername()]
         lastName = registrant.getLastName()
         firstName = registrant.getFirstName()
         documentType = self.getDocumentType()
         AISNumber = registrant.getAISNumber()
         fileFormat = self.getFileFormat()
-        joinList = [lastName,"_",firstName,"_",documentType,"_",AISNumber,".",fileFormat]
-        return ''.join(joinList)
+        organization = registrant.getOrganization()
+        joinList = [organization,"/",lastName,"_",firstName,"_",documentType,"_",AISNumber,".",fileFormat]
+        joinedString = ''.join(joinList)
+        return unicode(joinedString,"utf-8")
+        # return unicode(joinedString,"latin-1")
 
-    def rename(self):
-        if self.getNewFilename == None:
-            raise Exception
+    def renameForStaff(self):
+        if self.getNewFilename() == None:
+            try:
+                print(self.createNewFilenameForStaff(registrantDict))
+            except KeyError:
+                print("KeyError for " + self.getAISFormsUsername())
         else:
-            # print(str("renaming " + self.getOriginalFilename() + " to " + self.getNewFilename()))
-            os.rename(self.getOriginalFilename(),self.getNewFilename())
+            try:
+                print(str("renaming " + self.getOriginalFilename() + " to " + self.getNewFilename()))
+                # os.rename(self.getOriginalFilename(), self.getNewFilename())
+            except UnicodeEncodeError:
+                print(str("UnicodeError for " + self.getOriginalFilename()))
+            except TypeError:
+                print(str("TypeError for " + self.getOriginalFilename()))
+            except WindowsError:
+                print(str("WindowsError for " + self.getOriginalFilename()))
+
+    def createNewFilenameForAIS(self, registrantDict):
+        originalFilename = self.getOriginalFilename()
+        registrant = registrantDict[self.getAISFormsUsername()]
+        lastName = registrant.getLastName()
+        firstName = registrant.getFirstName()
+        documentType = self.getDocumentType()
+        AISNumber = registrant.getAISNumber()
+        fileFormat = self.getFileFormat()
+        organization = registrant.getOrganization()
+        AISDocumentID = self.getAISDocumentID()
+        joinList = [AISNumber,"_",AISDocumentID,".",fileFormat]
+        joinedString = ''.join(joinList)
+        return unicode(joinedString,"utf-8")
+        # return unicode(joinedString,"latin-1")
+
+    def renameForAIS(self):
+        if self.getNewFilename() == None:
+            try:
+                print(self.createNewFilenameForAIS(registrantDict))
+            except KeyError:
+                print("KeyError for " + self.getAISFormsUsername())
+        else:
+            try:
+                print(str("renaming " + self.getOriginalFilename() + " to " + self.getNewFilename()))
+                os.rename(self.getOriginalFilename(), self.getNewFilename())
+            except UnicodeEncodeError:
+                print(str("UnicodeError for " + self.getOriginalFilename()))
+            except TypeError:
+                print(str("TypeError for " + self.getOriginalFilename()))
+            except WindowsError:
+                print(str("WindowsError for " + self.getOriginalFilename()))
+
+
+def moveEm():
+    listToMove = filenamer.getMovable(toMove)
+    filenamer.moveEm(listToMove)
+
+def doNothing():
+    pass
+
+def getOrganization(username):
+    return organizationDict[username]
 
 def findDocumentType(filename):
     stringSplit = filename.split('.')
@@ -131,12 +234,16 @@ def makeRegistrantDict(registrantDataList = registrantDataList):
     lastMade = None
     for reg in registrantDataList:
         # Watch out here - should be 0, 1, 2, 3, but I flipped it because I pulled it out of AIS in this format 2013-04-17
-        newReg = Registrant(reg[1],reg[0],reg[2],reg[3])
-        outputDict[getUsername(reg[0])] = newReg
+        AISFormsAppReferenceCode = reg[0]
+        firstName = reg[2]
+        lastName = reg[1]
+        AISNumber = reg[3]
+        newReg = Registrant(AISFormsAppReferenceCode,firstName,lastName,AISNumber)
+        outputDict[getUsername(AISFormsAppReferenceCode)] = newReg
         lastMade = newReg
         i += 1
-    print i
-    print lastMade.getAISFormsAppReferenceCode()
+    # print i
+    # print lastMade.getAISFormsAppReferenceCode()
     return outputDict
 
 def getInterestingFiles():
@@ -145,58 +252,89 @@ def getInterestingFiles():
         if findFileFormat(filename) not in [".py",".pyc"]:
             outputList.append(filename)
         else:
-            print(str("skipping " + filename))
+            print(str("Ignored " + filename))
+            # os.rename(filename, str("Ignored/"+filename))
     return outputList
 
 def makeDocumentList(filenames = getInterestingFiles()):
     outputList = []
     for filename in filenames:
+        refCodeErrorFlag = False
         try:
             extractReferenceCode(filename)
             newDoc = Document(filename)
             outputList.append(newDoc)
         except:
-            print(str("skipping " + filename))
+            refCodeErrorFlag = True
+            # print("Probable ReferenceCode Error for " + filename)
+        if refCodeErrorFlag == True:
+            try:
+                print(str("Ignored " + filename))
+                # os.rename(filename, str("Ignored/"+filename))
+            except WindowsError:
+                print("WindowsError renaming " + filename)
+         
+            # break
+        # except:
     return outputList
 
 def addDocumentsToRegistrants(documentList, registrantDict):
     for document in documentList:
-        if document.getAISFormsusername() not in usernamesToIgnore:
-            registrant = registrantDict[document.getAISFormsusername()]
+        if document.getAISFormsUsername() not in usernamesToIgnore:
+            registrant = registrantDict[document.getAISFormsUsername()]
             registrant.addDocument(document)
 
-# Setup 
+def setOrganizations(registrantDict):
+    for key in registrantDict:
+        registrant = registrantDict[key]
+        registrant.setOrganization()
 
-registrantDict = makeRegistrantDict()
-documentList = makeDocumentList()
-addDocumentsToRegistrants(documentList,registrantDict)
-for document in documentList:
-    if document.getAISFormsusername() not in usernamesToIgnore:
-        document.setNewFilename(document.createNewFilename(registrantDict))
-
+def setup():
+    moveEm()
+    global registrantDict
+    registrantDict = makeRegistrantDict()
+    global documentList
+    documentList = makeDocumentList()
+    addDocumentsToRegistrants(documentList,registrantDict)
+    setOrganizations(registrantDict)
+    for document in documentList:
+        if document.getAISFormsUsername() not in usernamesToIgnore:
+            # document.setNewFilename(document.createNewFilenameForStaff(registrantDict))
+            try:
+                document.setNewFilename(document.createNewFilenameForAIS(registrantDict))
+            except TypeError:
+                print ("TypeError for " + Document)
 
 def go():
+    # print("edit")
     for document in documentList:
-        try:
-            if document.getDocumentType() not in docsToIgnore:
-                document.rename()
-            else:
-                print(str("ignoring " + document.getOriginalFilename()))
-        except:
-            print("exception for " + document.getOriginalFilename())
+        # try:
+        if document.getDocumentType() not in docsToIgnore:
+            # document.rename()
+            document.renameForAIS()
+        else:
+            original = document.getOriginalFilename()
+            print(str("moving " + original))
+            # os.rename(original, str("Ignored/"+original))
+        # except:
+        #     print("exception for " + document.getOriginalFilename())
 
 
-def tPrint (registrantDict = registrantDict):
+def tPrint (registrantDict):
     for key in registrantDict:
         registrant = registrantDict[key]
         AISFormsAppReferenceCode = registrant.getAISFormsAppReferenceCode()
-        AISFormsusername = registrant.getAISFormsusername()
+        AISFormsUsername = registrant.getAISFormsUsername()
         AISNumber = registrant.getAISNumber()
         documents = registrant.getDocuments()
         firstName = registrant.getFirstName()
         lastName = registrant.getLastName()
         print("###")
-        printString =' '.join([firstName,lastName,AISNumber,AISFormsusername])
+        printString =' '.join([firstName,lastName,AISNumber,AISFormsUsername])
         print(printString)
         for document in documents:
             print document.getOriginalFilename()
+
+###
+
+setup()
