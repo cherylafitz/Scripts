@@ -136,8 +136,8 @@ class Document(object):
                 print("KeyError for " + self.getAISFormsUsername())
         else:
             try:
-                print(str("renaming " + self.getOriginalFilename() + " to " + self.getNewFilename()))
-                # os.rename(self.getOriginalFilename(), self.getNewFilename())
+                # print(str("renaming " + self.getOriginalFilename() + " to " + self.getNewFilename()))
+                os.rename(self.getOriginalFilename(), self.getNewFilename())
             except UnicodeEncodeError:
                 print(str("UnicodeError for " + self.getOriginalFilename()))
             except TypeError:
@@ -290,7 +290,7 @@ def setOrganizations(registrantDict):
         registrant.setOrganization()
 
 def setup():
-    moveEm()
+    # moveEm()
     global registrantDict
     registrantDict = makeRegistrantDict()
     global documentList
@@ -299,19 +299,21 @@ def setup():
     setOrganizations(registrantDict)
     for document in documentList:
         if document.getAISFormsUsername() not in usernamesToIgnore:
-            # document.setNewFilename(document.createNewFilenameForStaff(registrantDict))
             try:
-                document.setNewFilename(document.createNewFilenameForAIS(registrantDict))
+                document.setNewFilename(document.createNewFilenameForStaff(registrantDict))
+                # document.setNewFilename(document.createNewFilenameForAIS(registrantDict))
             except TypeError:
                 print ("TypeError for " + Document)
 
 def go():
     # print("edit")
+    setup()
     for document in documentList:
         # try:
         if document.getDocumentType() not in docsToIgnore:
             # document.rename()
-            document.renameForAIS()
+            # document.renameForAIS()
+            document.renameForStaff()
         else:
             original = document.getOriginalFilename()
             print(str("moving " + original))
@@ -337,4 +339,3 @@ def tPrint (registrantDict):
 
 ###
 
-setup()
