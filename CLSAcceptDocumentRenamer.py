@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from CLSAcceptDocumentRenamerData import registrantDataList, referenceCodeDict, documentTypeDict, usernamesToIgnore, docsToIgnore, organizationDict, toMove, AISIDDict
+from CLSAcceptDocumentRenamerData import registrantDataList, documentTypeDict, usernamesToIgnore, docsToIgnore, organizationDict, toMove, AISIDDict
 import re
 import os
+import csv
 import filenamer
-
 
 # import codecs
 # latinEncoder = codecs.getencoder("latin-1")
@@ -168,7 +168,7 @@ class Document(object):
                 print("KeyError for " + self.getAISFormsUsername())
         else:
             try:
-                print(str("renaming " + self.getOriginalFilename() + " to " + self.getNewFilename()))
+                # print(str("renaming " + self.getOriginalFilename() + " to " + self.getNewFilename()))
                 os.rename(self.getOriginalFilename(), self.getNewFilename())
             except UnicodeEncodeError:
                 print(str("UnicodeError for " + self.getOriginalFilename()))
@@ -249,7 +249,7 @@ def makeRegistrantDict(registrantDataList = registrantDataList):
 def getInterestingFiles():
     outputList = []
     for filename in getFiles():
-        if findFileFormat(filename) not in [".py",".pyc"]:
+        if findFileFormat(filename) not in [".py",".pyc", ".txt", ""]:
             outputList.append(filename)
         else:
             print(str("Ignored " + filename))
@@ -269,7 +269,7 @@ def makeDocumentList(filenames = getInterestingFiles()):
             # print("Probable ReferenceCode Error for " + filename)
         if refCodeErrorFlag == True:
             try:
-                print(str("Ignored " + filename))
+                print(str("refCodeError for " + filename))
                 # os.rename(filename, str("Ignored/"+filename))
             except WindowsError:
                 print("WindowsError renaming " + filename)
@@ -289,8 +289,19 @@ def setOrganizations(registrantDict):
         registrant = registrantDict[key]
         registrant.setOrganization()
 
+def createRefCodeDict():
+    lol = list(csv.reader(open('refcodelist.txt', 'rb'), delimiter='\t'))
+    outputDict = dict()
+    for line in lol:
+        key = line[0]
+        value = line[1]
+        outputDict[key] = value
+    return outputDict
+
 def setup():
     # moveEm()
+    global referenceCodeDict
+    referenceCodeDict = createRefCodeDict()
     global registrantDict
     registrantDict = makeRegistrantDict()
     global documentList
@@ -300,26 +311,26 @@ def setup():
     for document in documentList:
         if document.getAISFormsUsername() not in usernamesToIgnore:
             try:
-                document.setNewFilename(document.createNewFilenameForStaff(registrantDict))
-                # document.setNewFilename(document.createNewFilenameForAIS(registrantDict))
+                # document.setNewFilename(document.createNewFilenameForStaff(registrantDict))
+                document.setNewFilename(document.createNewFilenameForAIS(registrantDict))
             except TypeError:
-                print ("TypeError for " + Document)
+                print ("TypeError for " + document.getOriginalFilename())
 
 def go():
     # print("edit")
     setup()
     for document in documentList:
-        # try:
         if document.getDocumentType() not in docsToIgnore:
-            # document.rename()
-            # document.renameForAIS()
-            document.renameForStaff()
+            try:
+                # document.rename()
+                document.renameForAIS()
+                # document.renameForStaff()
+            except:
+                print("329 exception for " + document.getOriginalFilename())
         else:
             original = document.getOriginalFilename()
             print(str("moving " + original))
             # os.rename(original, str("Ignored/"+original))
-        # except:
-        #     print("exception for " + document.getOriginalFilename())
 
 
 def tPrint (registrantDict):
