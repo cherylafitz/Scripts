@@ -28,7 +28,7 @@ def findOddPdfs(pdfList):
     for pdf in allPdfs:
         reader = PdfFileReader(file(pdf, "rb"))
         pages = reader.getNumPages()
-        if pages % 2 != 0:
+        if pages % 2 != 0 and pdf != 'blank.pdf':
             output.append(pdf)
     return output
 
